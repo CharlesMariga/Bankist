@@ -92,7 +92,6 @@ const formatMovementDate = (date, locale) => {
   if (daysPassed === 0) return 'Today';
   if (daysPassed === 1) return 'Yesterday';
   if (daysPassed <= 7) return `${daysPassed} days ago`;
-  console.log(locale);
 
   return Intl.DateTimeFormat(locale).format(date);
 };
@@ -165,14 +164,34 @@ const updateUI = currentAccount => {
   calcDisplaySummary(currentAccount);
 };
 
+const startLogoutTimer = () => {
+  // Set time to 5 minutes
+  let time = 5 * 60;
+
+  const tick = () => {
+    const min = `${Math.trunc(time / 60)}`.padStart(2, 0);
+    const sec = `${time % 60}`.padStart(2, 0);
+    // In each call, print the remaining time
+    labelTimer.textContent = `${min}:${sec}`;
+
+    if (time === 0) {
+      clearInterval(timer);
+      containerApp.style.opacity = '0';
+      labelWelcome.textContent = 'Login to get started!';
+    }
+
+    // Decrease the time
+    time--;
+  };
+
+  // Call the timer every second
+  tick();
+  const timer = setInterval(tick, 1000);
+  return timer;
+};
+
 // Event handlers
-let currentAccount;
-
-// Fake always loggedin
-// currentAccount = account1;
-// updateUI(currentAccount);
-// containerApp.style.opacity = '1';
-
+let currentAccount, timer;
 btnLogin.addEventListener('click', e => {
   e.preventDefault();
   currentAccount = accounts.find(acc => acc.userName === inputLoginUsername.value);
@@ -197,6 +216,9 @@ btnLogin.addEventListener('click', e => {
     // Clear the input fields
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
+
+    if (timer) clearInterval(timer);
+    timer = startLogoutTimer();
 
     updateUI(currentAccount);
   }
@@ -224,6 +246,10 @@ btnTransfer.addEventListener('click', e => {
 
     //  Update the UI
     updateUI(currentAccount);
+
+    // Reset timer
+    clearInterval(timer);
+    timer = startLogoutTimer();
   }
 });
 
@@ -242,6 +268,10 @@ btnLoan.addEventListener('click', e => {
 
     inputLoanAmount.value = '';
   }
+
+  // Reset timer
+  clearInterval(timer);
+  timer = startLogoutTimer();
 });
 
 btnClose.addEventListener('click', e => {
@@ -258,6 +288,9 @@ btnClose.addEventListener('click', e => {
   }
 
   inputCloseUsername.value = inputClosePin.value = '';
+
+  // Reset timer
+  clearInterval(timer);
 });
 
 let sorted = false;
@@ -265,4 +298,8 @@ btnSort.addEventListener('click', e => {
   e.preventDefault();
   displayMovements(currentAccount, !sorted);
   sorted = !sorted;
+
+  // Reset timer
+  clearInterval(timer);
+  timer = startLogoutTimer();
 });
