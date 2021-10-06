@@ -16,9 +16,9 @@ const account1 = {
     '2020-01-28T09:15:04.904Z',
     '2020-04-01T10:17:24.185Z',
     '2020-05-08T14:11:59.604Z',
-    '2020-05-27T17:01:17.194Z',
-    '2020-07-11T23:36:17.929Z',
-    '2020-07-12T10:51:36.790Z',
+    '2021-09-30T17:01:17.194Z',
+    '2021-10-05T18:49:59.371Z',
+    '2021-10-06T12:01:20.894Z',
   ],
   currency: 'EUR',
   locale: 'pt-PT',
@@ -36,8 +36,8 @@ const account2 = {
     '2020-01-25T14:18:46.235Z',
     '2020-02-05T16:33:06.386Z',
     '2020-04-10T14:43:26.374Z',
-    '2020-06-25T18:49:59.371Z',
-    '2020-07-26T12:01:20.894Z',
+    '2021-08-25T18:49:59.371Z',
+    '2021-08-26T12:01:20.894Z',
   ],
   currency: 'USD',
   locale: 'en-US',
@@ -85,6 +85,18 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
+const formatMovementDate = (date, locale) => {
+  const calDaysPassed = (date1, date2) => Math.round(Math.abs((date2 - date1) / (1000 * 60 * 60 * 24)));
+  const daysPassed = calDaysPassed(date, new Date());
+
+  if (daysPassed === 0) return 'Today';
+  if (daysPassed === 1) return 'Yesterday';
+  if (daysPassed <= 7) return `${daysPassed} days ago`;
+  console.log(locale);
+
+  return Intl.DateTimeFormat(locale).format(date);
+};
+
 const displayMovements = function (acc, sort = false) {
   containerMovements.innerHTML = '';
   const movs = sort ? acc.movements.slice().sort((a, b) => a - b) : acc.movements;
@@ -92,11 +104,7 @@ const displayMovements = function (acc, sort = false) {
     const type = mov > 0 ? 'deposit' : 'withdrawal';
     const date = new Date(acc.movementsDates[i]);
 
-    const day = `${date.getDate()}`.padStart(2, 0);
-    const month = `${date.getMonth() + 1}`.padStart(2, 0);
-    const year = date.getFullYear();
-
-    const displayDate = `${day}/${month}/${year}`;
+    const displayDate = formatMovementDate(date, acc.locale);
 
     const html = `
         <div class="movements__row">
@@ -171,13 +179,15 @@ btnLogin.addEventListener('click', e => {
 
     // Create current date and time
     const now = new Date();
-    const day = `${now.getDate()}`.padStart(2, 0);
-    const month = `${now.getMonth() + 1}`.padStart(2, 0);
-    const year = now.getFullYear();
-    const hour = `${now.getHours()}`.padStart(2, 0);
-    const min = `${now.getMinutes()}`.padEnd(2, 0);
+    const options = {
+      hour: 'numeric',
+      minute: 'numeric',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    };
 
-    labelDate.textContent = `${day}/${month}/${year}, ${hour}:${min}`;
+    labelDate.textContent = new Intl.DateTimeFormat(currentAccount.locale, options).format(now);
 
     // Clear the input fields
     inputLoginUsername.value = inputLoginPin.value = '';
@@ -191,7 +201,6 @@ btnTransfer.addEventListener('click', e => {
   e.preventDefault();
   const amount = +inputTransferAmount.value;
   const receiverAccount = accounts.find(acc => acc.userName === inputTransferTo.value);
-  console.log(amount, receiverAccount);
   inputTransferAmount.value = inputTransferTo.value = '';
 
   if (
@@ -235,7 +244,6 @@ btnClose.addEventListener('click', e => {
 
   if (inputCloseUsername.value === currentAccount.userName && +inputClosePin.value == currentAccount.pin) {
     const index = accounts.findIndex(acc => acc.userName === currentAccount.userName);
-    console.log(index);
 
     // Delete account
     accounts.splice(index, 1);
@@ -250,6 +258,6 @@ btnClose.addEventListener('click', e => {
 let sorted = false;
 btnSort.addEventListener('click', e => {
   e.preventDefault();
-  displayMovements(currentAccount.movements, !sorted);
+  displayMovements(currentAccount, !sorted);
   sorted = !sorted;
 });
